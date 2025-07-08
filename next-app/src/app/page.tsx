@@ -215,7 +215,7 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="font-mono text-foreground text-l flex-1 text-left overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
               </div>
             ))}
           </div>
@@ -247,13 +247,13 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="text-foreground text-l flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
+                <span className="text-foreground text-l flex-1 text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
               </div>
             ))}
           </div>
           {/* Live KaTeX Preview */}
           <div
-            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
+            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
             style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
           >
             <span
