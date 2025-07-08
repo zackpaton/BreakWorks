@@ -170,23 +170,23 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex gap-8">
         {/* LaTeX Input + History */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center">
+        <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
           {/* History (bottom-up) */}
           <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
             {equations.map((eq, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
                 onClick={() => {
                   setCurrentEquation(eq);
                   setAutoCompleteRanges([]);
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="font-mono text-gray-900 dark:text-gray-100 text-l flex-1 text-left overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                <span className="font-mono text-foreground text-l flex-1 text-left overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
               </div>
             ))}
           </div>
@@ -198,35 +198,35 @@ export default function Home() {
             onKeyPress={handleKeyPress}
             onKeyDown={handleKeyDown}
             placeholder="Enter LaTeX..."
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                     focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono placeholder-gray-400 dark:placeholder-gray-500 text-l overflow-x-auto whitespace-nowrap"
+            className="w-full p-3 border border-foreground rounded-lg 
+                     bg-background text-foreground
+                     focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap"
             style={{ maxWidth: '320px', minWidth: '0' }}
             autoComplete="off"
             spellCheck={false}
           />
         </div>
         {/* KaTeX Display Box + History */}
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center">
+        <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
           {/* KaTeX History (bottom-up) */}
           <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
             {equations.map((eq, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
                 onClick={() => {
                   setCurrentEquation(eq);
                   setAutoCompleteRanges([]);
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="text-gray-800 dark:text-gray-200 text-2xl flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
+                <span className="text-foreground text-l flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
               </div>
             ))}
           </div>
           {/* Live KaTeX Preview */}
           <div
-            className="text-gray-800 dark:text-gray-200 font-mono break-words text-2xl min-h-[2.5em] flex items-center border-t border-gray-200 dark:border-gray-600 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
+            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
             style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
           >
             <span

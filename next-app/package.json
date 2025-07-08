@@ -9,41 +9,27 @@
     "lint": "next lint"
   },
   "dependencies": {
-<<<<<<< HEAD
     "katex": "^0.16.22",
-    "next": "15.3.5",
-=======
     "lucide-react": "^0.525.0",
     "next": "15.3.5",
     "next-themes": "^0.4.6",
     "postcss": "^8.5.6",
->>>>>>> 8ce757914ad669bc18b32b9f3aa64cfd57fd261a
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-<<<<<<< HEAD
-    "@tailwindcss/postcss": "^4",
-=======
     "@tailwindcss/postcss": "^4.1.11",
->>>>>>> 8ce757914ad669bc18b32b9f3aa64cfd57fd261a
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
-<<<<<<< HEAD
     "tailwindcss": "^4",
-    "typescript": "^5"
-  }
-=======
-    "tailwindcss": "^4.1.11",
     "typescript": "^5"
   },
   "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
   "main": "tailwind.config.js",
   "author": "",
   "license": "ISC"
->>>>>>> 8ce757914ad669bc18b32b9f3aa64cfd57fd261a
 }
