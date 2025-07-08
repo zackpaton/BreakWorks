@@ -60,19 +60,28 @@ export default function Home() {
       insertAtCursor('_{}', 2, 'sub');
     } else if (e.key === '/') {
       e.preventDefault();
-      // Smart fraction: if char to left is a number, move it into numerator
+      // Smart fraction: move everything to the left (until LaTeX command, operator, or start) into numerator
       const pos = el.selectionStart || 0;
       const val = currentEquation;
-      const leftChar = val[pos - 1];
-      if (leftChar && /[0-9]/.test(leftChar)) {
-        // Remove the number to the left and insert \frac{num}{}
-        const before = val.slice(0, pos - 1);
+      // Find the last LaTeX command, operator, or start
+      const left = val.slice(0, pos);
+      // Regex: match last LaTeX command (\\[a-zA-Z]+), or operator, or start
+      const latexOrOp = /(?:\\[a-zA-Z]+|[+\-*/^_(){}=, ])/g;
+      let lastIndex = 0;
+      let match;
+      let m;
+      while ((m = latexOrOp.exec(left)) !== null) {
+        lastIndex = m.index + m[0].length;
+      }
+      const toMove = left.slice(lastIndex);
+      if (toMove.length > 0) {
+        const before = val.slice(0, lastIndex);
         const after = val.slice(pos);
-        const frac = `\\frac{${leftChar}}{}`;
+        const frac = `\\frac{${toMove}}{}`;
         const newValue = before + frac + after;
         setCurrentEquation(newValue);
         setAutoCompleteRanges([
-          ...shiftRanges(autoCompleteRanges, pos - 1, frac.length - 1),
+          ...shiftRanges(autoCompleteRanges, lastIndex, frac.length - toMove.length),
           {
             start: before.length,
             end: before.length + frac.length,
