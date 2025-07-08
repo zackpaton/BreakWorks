@@ -83,7 +83,7 @@ def extract_outermost_special_operation(latex_str):
             latex_str = "(" + left + ")" + "/" + "(" + right + ")"
             return extract_outermost_special_operation(latex_str)
 
-def extract_elementary_operation(latex_str: str):
+def extract_elementary_operation(latex_str: str) -> float:
     expr = latex_str.strip()
 
     # Helper: find top-level operator (not inside braces)
