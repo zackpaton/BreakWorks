@@ -14,6 +14,7 @@ export default function Home() {
   }[]>([]); // Track autocompleted commands
   const inputRef = useRef<HTMLInputElement>(null);
   const [results, setResults] = useState<(number | string | null)[]>([]);
+  const [presentationMode, setPresentationMode] = useState(false);
 
   // Helper to update ranges after text change
   function shiftRanges(
@@ -198,107 +199,140 @@ export default function Home() {
 }
 
   return (
-    <main className="flex-1  bg-background flex items-center justify-center">
-
-      <div className="flex gap-8">
-        {/* LaTeX Input + History */}
-        <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
-          {/* History (bottom-up) */}
-          <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
-            {equations.map((eq, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
-                onClick={() => {
-                  setCurrentEquation(eq);
-                  setAutoCompleteRanges([]);
-                  setTimeout(() => inputRef.current?.focus(), 0);
+    <main className="flex-1 bg-background flex items-center justify-center min-h-screen relative">
+      {/* Presentation Mode Toggle Button (always visible, fixed position) */}
+      <button
+        className="absolute top-5 left-3 px-6 py-2 rounded bg-background text-foreground font-bold transition z-50 border border-foreround"
+        onClick={() => setPresentationMode((v) => !v)}
+      >
+        {presentationMode ? 'Exit Presentation' : 'Presentation Mode'}
+      </button>
+      {presentationMode ? (
+        <div className="flex flex-col gap-4 w-full max-w-3xl items-center">
+          {equations.map((eq, i) => (
+            <div
+              key={i}
+              className="flex flex-row items-center justify-center gap-8 w-full"
+              style={{ minHeight: '2.5em' }}
+            >
+              <span
+                className="text-foreground text-l font-mono flex-1 text-center overflow-hidden text-ellipsis whitespace-nowrap"
+                style={{ minWidth: '250px', maxWidth: '350px' }}
+                title={eq}
+                dangerouslySetInnerHTML={{
+                  __html: katex.renderToString(eq, { throwOnError: false }),
                 }}
+              />
+              <span
+                className="text-foreground font-bold flex-1 text-center ml-2"
+                style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               >
-                <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
-              </div>
-            ))}
-          </div>
-          <input
-            ref={inputRef}
-            type="text"
-            value={currentEquation}
-            onChange={handleChange}
-            onKeyPress={handleKeyPress}
-            onKeyDown={handleKeyDown}
-            placeholder="Enter LaTeX..."
-            className="w-full border border-foreground rounded-lg bg-background text-foreground focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap px-3 py-2 flex items-center" // reduced py-3 to py-2, added flex and items-center
-            style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center' }} // set minHeight and height to match KaTeX preview
-            autoComplete="off"
-            spellCheck={false}
-          />
+                {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
+              </span>
+            </div>
+          ))}
         </div>
-        {/* KaTeX Display Box + History */}
-        <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
-          {/* KaTeX History (bottom-up) */}
-          <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
-            {equations.map((eq, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
-                onClick={() => {
-                  setCurrentEquation(eq);
-                  setAutoCompleteRanges([]);
-                  setTimeout(() => inputRef.current?.focus(), 0);
-                }}
-              >
-                <span className="text-foreground text-l flex-1 text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
-              </div>
-            ))}
-          </div>
-          {/* Live KaTeX Preview */}
-          <div
-            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
-            style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
-          >
-            <span
-              dangerouslySetInnerHTML={{
-                __html: katex.renderToString(currentEquation, {
-                  throwOnError: false,
-                }),
-              }}
+      ) : (
+        <div className="flex gap-8">
+          {/* LaTeX Input + History */}
+          <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+            {/* History (bottom-up) */}
+            <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
+              {equations.map((eq, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
+                  onClick={() => {
+                    setCurrentEquation(eq);
+                    setAutoCompleteRanges([]);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  }}
+                >
+                  <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                </div>
+              ))}
+            </div>
+            <input
+              ref={inputRef}
+              type="text"
+              value={currentEquation}
+              onChange={handleChange}
+              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter LaTeX..."
+              className="w-full border border-foreground rounded-lg bg-background text-foreground focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap px-3 py-2 flex items-center" // reduced py-3 to py-2, added flex and items-center
+              style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center' }} // set minHeight and height to match KaTeX preview
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
-        </div>
-        {/* BOX NUMBER 3 START */}
-        <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
-          {/* KaTeX History (bottom-up) */}
-          <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
-            {equations.map((eq, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
-                onClick={() => {
-                  setCurrentEquation(eq);
-                  setAutoCompleteRanges([]);
-                  setTimeout(() => inputRef.current?.focus(), 0);
+          {/* KaTeX Display Box + History */}
+          <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+            {/* KaTeX History (bottom-up) */}
+            <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
+              {equations.map((eq, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
+                  onClick={() => {
+                    setCurrentEquation(eq);
+                    setAutoCompleteRanges([]);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  }}
+                >
+                  <span className="text-foreground text-l flex-1 text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
+                </div>
+              ))}
+            </div>
+            {/* Live KaTeX Preview */}
+            <div
+              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
+              style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
+            >
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: katex.renderToString(currentEquation, {
+                    throwOnError: false,
+                  }),
                 }}
-              >
-                <span className="text-foreground font-bold ml-2">
-                  {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
-                </span>
-              </div>
-            ))}
+              />
+            </div>
           </div>
-          <div
-            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
-            style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
-          >
-            <span
-              dangerouslySetInnerHTML={{
-                __html: katex.renderToString(currentEquation, {
-                  throwOnError: false,
-                }),
-              }}
-            />
+          {/* BOX NUMBER 3 START */}
+          <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+            {/* KaTeX History (bottom-up) */}
+            <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
+              {equations.map((eq, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
+                  onClick={() => {
+                    setCurrentEquation(eq);
+                    setAutoCompleteRanges([]);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  }}
+                >
+                  <span className="text-foreground font-bold ml-2">
+                    {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div
+              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
+              style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
+            >
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: katex.renderToString(currentEquation, {
+                    throwOnError: false,
+                  }),
+                }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
