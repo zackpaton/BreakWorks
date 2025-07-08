@@ -23,6 +23,39 @@ export default function Home() {
     window.dispatchEvent(event);
   }, [presentationMode]);
 
+  // Helper to get the most recent numeric answer (not error)
+  function getLastNumericResult() {
+    for (let i = results.length - 1; i >= 0; i--) {
+      const val = results[i];
+      if ((typeof val === 'number' && !isNaN(val)) || (!isNaN(Number(val)) && val !== null && val !== undefined && String(val).toLowerCase() !== 'error')) {
+        return Number(val);
+      }
+    }
+    return 0;
+  }
+
+  // Replace 'ans' with the last numeric result for API calls
+  function getEquationForApi() {
+    const lastAns = getLastNumericResult();
+    return currentEquation.replace(/ans/gi, String(lastAns));
+  }
+
+  // Evaluate current equation on every key press (with 'ans' replaced)
+  useEffect(() => {
+    let ignore = false;
+    async function fetchResult() {
+      if (currentEquation.trim()) {
+        const eqForApi = getEquationForApi();
+        const result = await evaluateLatex(eqForApi);
+        if (!ignore) setCurrentResult(result);
+      } else {
+        setCurrentResult(null);
+      }
+    }
+    fetchResult();
+    return () => { ignore = true; };
+  }, [currentEquation, results]);
+
   // Evaluate current equation on every key press
   useEffect(() => {
     let ignore = false;
@@ -282,8 +315,8 @@ export default function Home() {
               onKeyPress={handleKeyPress}
               onKeyDown={handleKeyDown}
               placeholder="Enter LaTeX..."
-              className="w-full border border-foreground rounded-lg bg-background text-foreground focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap px-3 py-2 flex items-center" // reduced py-3 to py-2, added flex and items-center
-              style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center' }} // set minHeight and height to match KaTeX preview
+              className="w-full border border-foreground rounded-lg bg-background text-foreground focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap px-3 py-2 flex items-center"
+              style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center', position: 'relative', background: 'transparent' }}
               autoComplete="off"
               spellCheck={false}
             />
