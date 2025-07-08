@@ -294,10 +294,10 @@ export default function Home() {
     <main className="flex-1 bg-background flex items-center justify-center relative">
       {/* Presentation Mode Toggle Button (always visible, fixed position) */}
       <button
-        className="absolute top-5 left-3 px-6 py-2 rounded bg-background text-foreground font-bold transition z-50 border border-foreround"
+        className="absolute top-5 left-3 px-6 py-2 rounded bg-background text-foreground font-bold z-50 border border-foreround cursor-pointer group"
         onClick={() => setPresentationMode((v) => !v)}
       >
-        {presentationMode ? 'Exit Presentation' : 'Presentation Mode'}
+        <div className="group-hover:scale-105">{presentationMode ? 'Exit Presentation' : 'Presentation Mode'}</div>
       </button>
       {presentationMode ? (
         <div className="flex flex-col gap-4 w-full max-w-3xl items-center">
