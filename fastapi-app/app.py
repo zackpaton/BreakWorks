@@ -50,16 +50,15 @@ def extract_outermost_special_operation(latex_str):
         case r'\sum':
             pattern = r'\\sum_\{([a-zA-Z])=(\d+)\}\^\{(\d+)\}\s*(.+)'
             match = re.match(pattern, latex_str)
-            if not match:
-                return None
+                
             var, lower, upper, operand = match.groups()
             lower = int(lower)
-            right = int(right)
+            upper = int(upper)
             letter = var
             operand = operand.strip()
 
             operand = extract_outermost_special_operation(operand)
-            return matlab_engine.sigma            
+            return matlab_engine.sigma(var, lower, upper, operand)
                 
         case r'\int':
             pattern = r'\\int_\{(\d+)\}\^\{(\d+)\}\s*(.+)\\, d([a-zA-Z])'
@@ -139,4 +138,9 @@ def operate(op: str, left: str, right: str):
 
 @app.post("/evaluateLatex")
 async def evaluate_latex(request: LatexExprRequest):
-    return { "result": parse_latex(request.latexExpression) }
+    result = parse_latex(request.latexExpression)
+    if result == None:
+        return { "result": "Failed to process"}
+    else:
+        return {"result": result}
+    

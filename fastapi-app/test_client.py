@@ -4,7 +4,7 @@ import requests
 url = "http://localhost:8000/evaluateLatex"
 
 # The LaTeX expression you want to evaluate
-latex_expression = r"2+3"
+latex_expression = r"\sum_{k=0}^{10} k+1"
 
 # Prepare the request payload
 payload = {
