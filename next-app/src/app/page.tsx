@@ -43,10 +43,8 @@ export default function Home() {
   // Replace 'ans' and user variables with their assigned values for API calls
   function getEquationForApi() {
     let eq = currentEquation;
-    // 1. Replace 'ans' as before
     const lastAns = getLastNumericResult();
     eq = eq.replace(/(?<![a-zA-Z0-9_])ans(?![a-zA-Z0-9_])/gi, String(lastAns));
-    // 2. Find variable assignments in history (e.g., x=5, a=x+y)
     const assignments: Record<string, string> = {};
     for (let i = 0; i < equations.length; ++i) {
       const match = equations[i].match(/^\s*([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
@@ -55,9 +53,8 @@ export default function Home() {
         assignments[variable] = value.trim();
       }
     }
-    // 3. Recursively replace all standalone variables in eq with their assigned values
     const replaceVars = (expr: string, depth = 0): string => {
-      if (depth > 10) return expr; // prevent infinite recursion
+      if (depth > 10) return expr;
       let replaced = expr;
       for (const [variable, value] of Object.entries(assignments)) {
         if (variable.toLowerCase() !== 'ans') {
@@ -73,7 +70,7 @@ export default function Home() {
     return eq;
   }
 
-  // Evaluate current equation on every key press (with 'ans' replaced)
+  // Evaluate current equation on every key press
   useEffect(() => {
     let ignore = false;
     async function fetchResult() {
@@ -108,7 +105,6 @@ export default function Home() {
   const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentEquation.trim()) {
       setEquations((prev) => [...prev, currentEquation.trim()]);
-      // If this is a variable assignment, don't evaluate, just store blank result
       if (/^\s*[a-zA-Z][a-zA-Z0-9_]*\s*=\s*-?\d+(?:\.\d+)?\s*$/.test(currentEquation.trim())) {
         setResults((prev) => [...prev, '']);
       } else {
@@ -129,7 +125,7 @@ export default function Home() {
     // If input is empty and user types +, *, or -: prepend 'ans'
     if (currentEquation === '' && (e.key === '+' || e.key === '*' || e.key === '-')) {
       e.preventDefault();
-      insertAtCursor('ans' + e.key, 4 + (e.key === '*' ? 1 : 0), undefined); // cursor after operator
+      insertAtCursor('ans' + e.key, 4 + (e.key === '*' ? 1 : 0), undefined);
       return;
     }
     // If input is empty and user types /: insert \frac{ans}{} and place cursor in denominator
@@ -142,7 +138,6 @@ export default function Home() {
       ]);
       setTimeout(() => {
         el.focus();
-        // Cursor inside denominator {}
         el.setSelectionRange(frac.length - 1, frac.length - 1);
       }, 0);
       return;
@@ -162,12 +157,9 @@ export default function Home() {
       insertAtCursor('_{}', 2, 'sub');
     } else if (e.key === '/') {
       e.preventDefault();
-      // Smart fraction: move everything to the left (until LaTeX command, operator, or start) into numerator
       const pos = el.selectionStart || 0;
       const val = currentEquation;
-      // Find the last LaTeX command, operator, or start
       const left = val.slice(0, pos);
-      // Regex: match last LaTeX command (\\[a-zA-Z]+), or operator, or start
       const latexOrOp = /(?:\\[a-zA-Z]+|[+\-*/^_(){}=, ])/g;
       let lastIndex = 0;
       let match;
@@ -205,7 +197,6 @@ export default function Home() {
       e.preventDefault();
       insertAtCursor('\\cdot', 6, 'times'); // cursor after \times
     } else if (e.key === '\\') {
-      // Wait for possible frac
       setTimeout(() => {
         const val = el.value;
         const pos = el.selectionStart || 0;
@@ -215,7 +206,7 @@ export default function Home() {
       }, 0);
     } else if (
       e.key === 'Backspace' &&
-      selectionStart === selectionEnd // no selection
+      selectionStart === selectionEnd
     ) {
       // Check if at end of an autocompleted command
       const pos = selectionStart || 0;
@@ -245,7 +236,6 @@ export default function Home() {
         }, 0);
         return;
       }
-      // ...existing code for backspace restore...
       if (currentEquation === '' && equations.length > 0) {
         e.preventDefault();
         const last = equations[equations.length - 1];
