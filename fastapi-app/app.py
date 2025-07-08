@@ -43,6 +43,7 @@ def extract_outermost_special_operation(latex_str):
             rest = expr[len(op):].lstrip()
             break
     
+    print(rest)
     if rest == "":
         return extract_elementary_operation(latex_str)
     
@@ -57,36 +58,45 @@ def extract_outermost_special_operation(latex_str):
             letter = var
             operand = operand.strip()
 
-            rest = ""
+            remain = ""
             for op in [r'\sum', r'\int', r'\frac']:
-                if expr.startswith(op):            
-                    rest = expr[len(op):].lstrip()
+                if op in rest:            
+                    remain = expr[len(op):].lstrip()
                     break
             
-            if rest == "":
+            if remain == "":
                 return matlab_engine.sigma(var, lower, upper, operand)
-            return matlab_engine.sigma(var, lower, upper, extract_elementary_operation(operand))            
+            return matlab_engine.sigma(var, lower, upper, extract_outermost_special_operation(operand))            
                 
         case r'\int':
             pattern = r'\\int_\{(\d+)\}\^\{(\d+)\}\s*(.+)\\, d([a-zA-Z])'
             match = re.match(pattern, latex_str)
             if not match:
                 return None
-            var, lower, upper, operand = match.groups()
+            lower, upper, operand, var = match.groups()
             lower = int(lower)
             upper = int(upper)
             letter = var
             operand = operand.strip() 
 
-            rest = ""
+            remain = ""
             for op in [r'\sum', r'\int', r'\frac']:
-                if expr.startswith(op):            
-                    rest = expr[len(op):].lstrip()
+                if op in rest:            
+                    remain = expr[len(op):].lstrip()
                     break
             
-            if rest == "":
-                return matlab_engine.integralAB(var, lower, upper, operand)
-            return matlab_engine.integralAB(var, lower, upper, extract_elementary_operation(operand))   
+            if remain == "":
+                print(lower)
+                print(upper)
+                print(operand)
+                print(var)
+                return matlab_engine.integralAB(lower, upper, operand, var)
+            print(lower)
+            print(upper)
+            print(operand)
+            print(var)
+            return matlab_engine.integralAB(lower, upper, extract_outermost_special_operation(operand), var) 
+          
 
         case r'\frac':
             for i, c in enumerate(rest):
