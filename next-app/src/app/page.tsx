@@ -15,12 +15,28 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [results, setResults] = useState<(number | string | null)[]>([]);
   const [presentationMode, setPresentationMode] = useState(false);
+  const [currentResult, setCurrentResult] = useState<string | number | null>(null);
 
   // When presentationMode changes, dispatch a custom event for layout.tsx
   useEffect(() => {
     const event = new CustomEvent('presentationModeToggle', { detail: { presentationMode } });
     window.dispatchEvent(event);
   }, [presentationMode]);
+
+  // Evaluate current equation on every key press
+  useEffect(() => {
+    let ignore = false;
+    async function fetchResult() {
+      if (currentEquation.trim()) {
+        const result = await evaluateLatex(currentEquation.trim());
+        if (!ignore) setCurrentResult(result);
+      } else {
+        setCurrentResult(null);
+      }
+    }
+    fetchResult();
+    return () => { ignore = true; };
+  }, [currentEquation]);
 
   // Helper to update ranges after text change
   function shiftRanges(
@@ -328,13 +344,9 @@ export default function Home() {
               className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
               style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
             >
-              <span
-                dangerouslySetInnerHTML={{
-                  __html: katex.renderToString(currentEquation, {
-                    throwOnError: false,
-                  }),
-                }}
-              />
+              <span className="text-foreground font-bold ml-2">
+                {currentResult !== undefined && currentResult !== null ? String(currentResult) : ''}
+              </span>
             </div>
           </div>
         </div>
