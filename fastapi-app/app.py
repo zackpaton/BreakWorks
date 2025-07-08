@@ -30,7 +30,7 @@ def extract_elementary_operation(latex_str: str):
         return -1, None
 
     # Order of precedence: +-, */, ^
-    for ops in ['+-', '*/', '^']:
+    for ops in ['+', '-', '*', '/', '^']:
         idx, op = find_top_level(expr, ops)
         if idx != -1:
             left = expr[:idx].strip()
