@@ -57,8 +57,15 @@ def extract_outermost_special_operation(latex_str):
             letter = var
             operand = operand.strip()
 
-            operand = extract_outermost_special_operation(operand)
-            return matlab_engine.sigma(var, lower, upper, operand)
+            rest = ""
+            for op in [r'\sum', r'\int', r'\frac']:
+                if expr.startswith(op):            
+                    rest = expr[len(op):].lstrip()
+                    break
+            
+            if rest == "":
+                return matlab_engine.sigma(var, lower, upper, operand)
+            return matlab_engine.sigma(var, lower, upper, extract_elementary_operation(operand))            
                 
         case r'\int':
             pattern = r'\\int_\{(\d+)\}\^\{(\d+)\}\s*(.+)\\, d([a-zA-Z])'
@@ -67,11 +74,19 @@ def extract_outermost_special_operation(latex_str):
                 return None
             var, lower, upper, operand = match.groups()
             lower = int(lower)
-            right = int(right)
+            upper = int(upper)
             letter = var
             operand = operand.strip() 
 
-            operand = extract_outermost_special_operation(operand)
+            rest = ""
+            for op in [r'\sum', r'\int', r'\frac']:
+                if expr.startswith(op):            
+                    rest = expr[len(op):].lstrip()
+                    break
+            
+            if rest == "":
+                return matlab_engine.integralAB(var, lower, upper, operand)
+            return matlab_engine.integralAB(var, lower, upper, extract_elementary_operation(operand))   
 
         case r'\frac':
             for i, c in enumerate(rest):
