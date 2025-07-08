@@ -279,7 +279,7 @@ export default function Home() {
       if (previewEl) previewEl.removeEventListener('scroll', handlePreviewScroll);
       if (resultEl) resultEl.removeEventListener('scroll', handleResultScroll);
     };
-  }, []);
+  }, [presentationMode]);
   // Scroll both histories to bottom on new equation
   useEffect(() => {
     if (inputHistoryRef.current) {
