@@ -60,19 +60,28 @@ export default function Home() {
       insertAtCursor('_{}', 2, 'sub');
     } else if (e.key === '/') {
       e.preventDefault();
-      // Smart fraction: if char to left is a number, move it into numerator
+      // Smart fraction: move everything to the left (until LaTeX command, operator, or start) into numerator
       const pos = el.selectionStart || 0;
       const val = currentEquation;
-      const leftChar = val[pos - 1];
-      if (leftChar && /[0-9]/.test(leftChar)) {
-        // Remove the number to the left and insert \frac{num}{}
-        const before = val.slice(0, pos - 1);
+      // Find the last LaTeX command, operator, or start
+      const left = val.slice(0, pos);
+      // Regex: match last LaTeX command (\\[a-zA-Z]+), or operator, or start
+      const latexOrOp = /(?:\\[a-zA-Z]+|[+\-*/^_(){}=, ])/g;
+      let lastIndex = 0;
+      let match;
+      let m;
+      while ((m = latexOrOp.exec(left)) !== null) {
+        lastIndex = m.index + m[0].length;
+      }
+      const toMove = left.slice(lastIndex);
+      if (toMove.length > 0) {
+        const before = val.slice(0, lastIndex);
         const after = val.slice(pos);
-        const frac = `\\frac{${leftChar}}{}`;
+        const frac = `\\frac{${toMove}}{}`;
         const newValue = before + frac + after;
         setCurrentEquation(newValue);
         setAutoCompleteRanges([
-          ...shiftRanges(autoCompleteRanges, pos - 1, frac.length - 1),
+          ...shiftRanges(autoCompleteRanges, lastIndex, frac.length - toMove.length),
           {
             start: before.length,
             end: before.length + frac.length,
@@ -92,7 +101,7 @@ export default function Home() {
       }
     } else if (e.key === '*') {
       e.preventDefault();
-      insertAtCursor('\\', 6, 'times'); // cursor after \times
+      insertAtCursor('\\cdot', 6, 'times'); // cursor after \times
     } else if (e.key === '\\') {
       // Wait for possible frac
       setTimeout(() => {
@@ -189,7 +198,7 @@ export default function Home() {
 }
 
   return (
-    <main className="flex-1  bg-background dark:bg-gray-900 flex items-center justify-center">
+    <main className="flex-1  bg-background flex items-center justify-center">
 
       <div className="flex gap-8">
         {/* LaTeX Input + History */}
@@ -206,7 +215,7 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="font-mono text-foreground text-l flex-1 text-left overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
               </div>
             ))}
           </div>
@@ -238,13 +247,13 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="text-foreground text-l flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
+                <span className="text-foreground text-l flex-1 text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
               </div>
             ))}
           </div>
           {/* Live KaTeX Preview */}
           <div
-            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
+            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
             style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
           >
             <span
@@ -270,8 +279,7 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="text-foreground text-l flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
-                <span className="text-green-600 font-bold ml-2">
+                <span className="text-foreground font-bold ml-2">
                   {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
                 </span>
               </div>

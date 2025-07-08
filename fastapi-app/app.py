@@ -45,8 +45,45 @@ def extract_outermost_special_operation(latex_str):
     
     if rest == "":
         return extract_elementary_operation(latex_str)
+    
+    match op:
+        case r'\sum':
+            pattern = r'\\sum_\{([a-zA-Z])=(\d+)\}\^\{(\d+)\}\s*(.+)'
+            match = re.match(pattern, latex_str)
+            if not match:
+                return None
+            var, lower, upper, operand = match.groups()
+            lower = int(lower)
+            right = int(right)
+            letter = var
+            operand = operand.strip()
 
-def extract_elementary_operation(latex_str: str):
+            operand = extract_outermost_special_operation(operand)
+            return matlab_engine.sigma            
+                
+        case r'\int':
+            pattern = r'\\int_\{(\d+)\}\^\{(\d+)\}\s*(.+)\\, d([a-zA-Z])'
+            match = re.match(pattern, latex_str)
+            if not match:
+                return None
+            var, lower, upper, operand = match.groups()
+            lower = int(lower)
+            right = int(right)
+            letter = var
+            operand = operand.strip() 
+
+            operand = extract_outermost_special_operation(operand)
+
+        case r'\frac':
+            for i, c in enumerate(rest):
+                if c == '}':
+                    left = rest[1:i]
+                    right = rest[i + 1:]
+
+            latex_str = left + "/" + right
+            return extract_outermost_special_operation(latex_str)
+
+def extract_elementary_operation(latex_str: str) -> float:
     expr = latex_str.strip()
 
     # Helper: find top-level operator (not inside braces)
@@ -81,7 +118,8 @@ def extract_elementary_operation(latex_str: str):
 
 def parse_latex(latex_str: str):
     latex_str = re.sub(r"\\cdot", "*", latex_str)
-    result = extract_elementary_operation(latex_str)
+    latex_str = re.sub(r"\\div", "/", latex_str)
+    result = extract_outermost_special_operation(latex_str)
     return result
 
 def operate(op: str, left: str, right: str):
