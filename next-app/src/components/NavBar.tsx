@@ -28,7 +28,7 @@ export default function NavBar() {
       <div className="pr-6">
         <button
           aria-label="Toggle dark mode"
-          className="bg-background hover:bg-background/80 transition-colors px-3 py-1 rounded-md shadow-sm shadow-foreground text-primary font-semibold flex items-center"
+          className="bg-background hover:bg-background/80 transition-colors px-3 py-1 rounded-md shadow-sm shadow-foreground text-primary font-semibold flex items-center cursor-pointer"
           onClick={() =>
             setTheme(resolvedTheme === "dark" ? "light" : "dark")
           }
