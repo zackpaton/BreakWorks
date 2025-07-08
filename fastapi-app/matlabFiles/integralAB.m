@@ -8,12 +8,15 @@ function result = integralAB(a, b, expression, var)
         var = char(var);
     end
 
+    pattern = ['\<' var '\>'];
+    expression = regexprep(expression, pattern, 'x');
+
     expression = regexprep(expression, '(?<!\.)\^', '.^');
     expression = regexprep(expression, '(?<!\.)\*', '.*');
     expression = regexprep(expression, '(?<!\.)\/', './');
 
-    syms(var);                           
-    func = str2func(['@(' var ')' expression]);                 
+    syms('x');                           
+    func = str2func(['@(x)' expression]);                 
     result = integral(func, a, b);
 
 end
