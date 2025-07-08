@@ -2,6 +2,11 @@ from contextlib import asynccontextmanager
 
 import matlab.engine
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+class LatexExpRequest(BaseModel):
+    latexExpression: str
 
 matlab_engine = None
 
@@ -13,6 +18,12 @@ async def lifespan_func(app: FastAPI):
     matlab_engine.quit()
 
 app = FastAPI(lifespan=lifespan_func)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def extract_elementary_operation(latex_str: str):
     expr = latex_str.strip()
@@ -66,6 +77,6 @@ def operate(op: str, left: str, right: str):
         case '^':
             return matlab_engine.pow(left, right)
 
-@app.get("/")
-async def home():
-    return parse_latex("3+5")
+@app.get("/evaluateLatex")
+async def home(request: LatexExpRequest):
+    return parse_latex(request.latexExpression)
