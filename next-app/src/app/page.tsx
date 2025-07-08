@@ -268,6 +268,76 @@ export default function Home() {
   }
 }
 
+const inputHistoryRef = useRef<HTMLDivElement>(null);
+  const previewHistoryRef = useRef<HTMLDivElement>(null);
+  const resultHistoryRef = useRef<HTMLDivElement>(null);
+
+  // Synchronize scroll positions
+  const isSyncingRef = useRef({ input: false, preview: false, result: false });
+
+  useEffect(() => {
+    const handleInputScroll = () => {
+      if (!inputHistoryRef.current || !previewHistoryRef.current || !resultHistoryRef.current) return;
+      if (isSyncingRef.current.input) {
+        isSyncingRef.current.input = false;
+        return;
+      }
+      isSyncingRef.current.preview = true;
+      isSyncingRef.current.result = true;
+      previewHistoryRef.current.scrollTop = inputHistoryRef.current.scrollTop;
+      resultHistoryRef.current.scrollTop = inputHistoryRef.current.scrollTop;
+    };
+
+    const handlePreviewScroll = () => {
+      if (!inputHistoryRef.current || !previewHistoryRef.current || !resultHistoryRef.current) return;
+      if (isSyncingRef.current.preview) {
+        isSyncingRef.current.preview = false;
+        return;
+      }
+      isSyncingRef.current.input = true;
+      isSyncingRef.current.result = true;
+      inputHistoryRef.current.scrollTop = previewHistoryRef.current.scrollTop;
+      resultHistoryRef.current.scrollTop = previewHistoryRef.current.scrollTop;
+    };
+
+    const handleResultScroll = () => {
+      if (!inputHistoryRef.current || !previewHistoryRef.current || !resultHistoryRef.current) return;
+      if (isSyncingRef.current.result) {
+        isSyncingRef.current.result = false;
+        return;
+      }
+      isSyncingRef.current.input = true;
+      isSyncingRef.current.preview = true;
+      inputHistoryRef.current.scrollTop = resultHistoryRef.current.scrollTop;
+      previewHistoryRef.current.scrollTop = resultHistoryRef.current.scrollTop;
+    };
+
+    const inputEl = inputHistoryRef.current;
+    const previewEl = previewHistoryRef.current;
+    const resultEl = resultHistoryRef.current;
+
+    if (inputEl && previewEl && resultEl) {
+      inputEl.addEventListener('scroll', handleInputScroll);
+      previewEl.addEventListener('scroll', handlePreviewScroll);
+      resultEl.addEventListener('scroll', handleResultScroll);
+    }
+
+    return () => {
+      if (inputEl) inputEl.removeEventListener('scroll', handleInputScroll);
+      if (previewEl) previewEl.removeEventListener('scroll', handlePreviewScroll);
+      if (resultEl) resultEl.removeEventListener('scroll', handleResultScroll);
+    };
+  }, [presentationMode]);
+  // Scroll both histories to bottom on new equation
+  useEffect(() => {
+    if (inputHistoryRef.current) {
+      inputHistoryRef.current.scrollTop = inputHistoryRef.current.scrollHeight;
+    }
+    if (previewHistoryRef.current) {
+      previewHistoryRef.current.scrollTop = previewHistoryRef.current.scrollHeight;
+    }
+  }, [equations]);
+
   return (
     <main className="flex-1 bg-background flex items-center justify-center relative">
       {/* Presentation Mode Toggle Button (always visible, fixed position) */}
@@ -303,12 +373,15 @@ export default function Home() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-8">
+        <div className="flex gap-8 max-h-[75vh] overflow-y-auto">
           {/* LaTeX Input + History */}
           <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
-            {/* History (bottom-up) */}
-            <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
-              {equations.map((eq, i) => (
+            <div
+            ref={inputHistoryRef}
+              className="w-full flex flex-col-reverse gap-2 mb-4"
+            style={{ minHeight: '200px', maxHeight: '75vh', overflowY: 'auto' }}
+          >
+              {equations.slice().reverse().map((eq, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
@@ -331,16 +404,19 @@ export default function Home() {
               onKeyDown={handleKeyDown}
               placeholder="Enter LaTeX..."
               className="w-full border border-foreground rounded-lg bg-background text-foreground focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap px-3 py-2 flex items-center"
-              style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center', position: 'relative', background: 'transparent' }}
+              style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center' }}
               autoComplete="off"
               spellCheck={false}
             />
           </div>
           {/* KaTeX Display Box + History */}
-          <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
-            {/* KaTeX History (bottom-up) */}
-            <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
-              {equations.map((eq, i) => (
+          <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+            <div
+            ref={previewHistoryRef}
+              className="w-full flex flex-col-reverse gap-2 mb-4"
+            style={{ minHeight: '200px', maxHeight: '75vh', overflowY: 'auto' }}
+          >
+              {equations.slice().reverse().map((eq, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
@@ -350,7 +426,7 @@ export default function Home() {
                     setTimeout(() => inputRef.current?.focus(), 0);
                   }}
                 >
-                  <span className="text-foreground text-l flex-1 text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
+                  <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
                 </div>
               ))}
             </div>
@@ -369,10 +445,13 @@ export default function Home() {
             </div>
           </div>
           {/* BOX NUMBER 3 START */}
-          <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
-            {/* KaTeX History (bottom-up) */}
-            <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
-              {equations.map((eq, i) => (
+          <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+            <div
+            ref={resultHistoryRef}
+              className="w-full flex flex-col-reverse gap-2 mb-4"
+            style={{ minHeight: '200px', maxHeight: '75vh', overflowY: 'auto' }}
+          >
+              {equations.slice().reverse().map((eq, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
@@ -383,7 +462,7 @@ export default function Home() {
                   }}
                 >
                   <span className="text-foreground font-bold ml-2">
-                    {results[i] !== undefined ? String(results[i]) : ''}
+                    {results.slice().reverse()[i] !== undefined ? String(results.slice().reverse()[i]) : ''}
                   </span>
                 </div>
               ))}
