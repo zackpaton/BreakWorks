@@ -92,7 +92,7 @@ export default function Home() {
       }
     } else if (e.key === '*') {
       e.preventDefault();
-      insertAtCursor('\\', 6, 'times'); // cursor after \times
+      insertAtCursor('\\cdot', 6, 'times'); // cursor after \times
     } else if (e.key === '\\') {
       // Wait for possible frac
       setTimeout(() => {
@@ -189,7 +189,8 @@ export default function Home() {
 }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <main className="flex-1  bg-background flex items-center justify-center">
+
       <div className="flex gap-8">
         {/* LaTeX Input + History */}
         <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
