@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, KeyboardEvent, ChangeEvent, useRef } from 'react';
+import { useState, KeyboardEvent, ChangeEvent, useRef, useEffect } from 'react';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
 
@@ -15,6 +15,12 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [results, setResults] = useState<(number | string | null)[]>([]);
   const [presentationMode, setPresentationMode] = useState(false);
+
+  // When presentationMode changes, dispatch a custom event for layout.tsx
+  useEffect(() => {
+    const event = new CustomEvent('presentationModeToggle', { detail: { presentationMode } });
+    window.dispatchEvent(event);
+  }, [presentationMode]);
 
   // Helper to update ranges after text change
   function shiftRanges(
