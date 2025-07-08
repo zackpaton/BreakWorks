@@ -80,7 +80,7 @@ def extract_elementary_operation(latex_str: str):
     return float(latex_str)
 
 def parse_latex(latex_str: str):
-    latex_str = re.sub("\cdot", '*', latex_str)
+    latex_str = re.sub(r"\\cdot", "*", latex_str)
     result = extract_elementary_operation(latex_str)
     return result
 
