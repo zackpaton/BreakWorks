@@ -107,6 +107,9 @@ def extract_outermost_special_operation(latex_str):
             latex_str = left + "/" + right
             return extract_outermost_special_operation(latex_str)
 
+        case _:
+            return None
+
 def extract_elementary_operation(latex_str: str) -> float:
     expr = latex_str.strip()
 
