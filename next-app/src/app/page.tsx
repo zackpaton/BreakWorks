@@ -413,8 +413,8 @@ export default function Home() {
                     setTimeout(() => inputRef.current?.focus(), 0);
                   }}
                 >
-                  <span className="text-foreground font-bold ml-2">
-                    {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
+                  <span>
+                    {results.slice().reverse()[i] !== undefined ? String(results.slice().reverse()[i]) : ''}
                   </span>
                 </div>
               ))}
