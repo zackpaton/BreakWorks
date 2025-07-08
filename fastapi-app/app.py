@@ -14,12 +14,9 @@ async def lifespan_func(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan_func)
 
-@app.get("/")
-async def home():
-    return "Hello World!"
-
-def extract_elementary_operation(latex_str):
+def extract_elementary_operation(latex_str: str):
     expr = latex_str.strip()
+    
     # Helper: find top-level operator (not inside braces)
     def find_top_level(expr, ops):
         depth = 0
@@ -48,13 +45,13 @@ def extract_elementary_operation(latex_str):
                 return operate(op, extract_elementary_operation(left), right)
             return operate(op, extract_elementary_operation(left), extract_elementary_operation(right))
             
-    return (None, expr, "")
+    return float(latex_str)
 
-def parse_latex(latex_str):
-    
+def parse_latex(latex_str: str):
     result = extract_elementary_operation(latex_str)
+    return result
 
-def operate(op, left, right):
+def operate(op: str, left: str, right: str):
     left = float(left)
     right = float(right)
     match op:
@@ -68,3 +65,7 @@ def operate(op, left, right):
             return matlab_engine.div(left, right)
         case '^':
             return matlab_engine.pow(left, right)
+
+@app.get("/")
+async def home():
+    return parse_latex("3*5")
