@@ -118,7 +118,8 @@ def extract_elementary_operation(latex_str: str):
 
 def parse_latex(latex_str: str):
     latex_str = re.sub(r"\\cdot", "*", latex_str)
-    result = extract_elementary_operation(latex_str)
+    latex_str = re.sub(r"\\div", "/", latex_str)
+    result = extract_outermost_special_operation(latex_str)
     return result
 
 def operate(op: str, left: str, right: str):
