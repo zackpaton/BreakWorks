@@ -40,11 +40,30 @@ export default function Home() {
     return 0;
   }
 
-  // Replace 'ans' as a variable with the last numeric result for API calls
+  // Replace 'ans' and user variables with their assigned values for API calls
   function getEquationForApi() {
+    let eq = currentEquation;
+    // 1. Replace 'ans' as before
     const lastAns = getLastNumericResult();
-    // Replace only standalone 'ans' (not part of another word)
-    return currentEquation.replace(/(?<![a-zA-Z0-9_])ans(?![a-zA-Z0-9_])/gi, String(lastAns));
+    eq = eq.replace(/(?<![a-zA-Z0-9_])ans(?![a-zA-Z0-9_])/gi, String(lastAns));
+    // 2. Find variable assignments in history (e.g., x=5)
+    const assignments: Record<string, string> = {};
+    for (let i = 0; i < equations.length; ++i) {
+      const match = equations[i].match(/^\s*([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?)/);
+      if (match) {
+        const [, variable, value] = match;
+        assignments[variable] = value;
+      }
+    }
+    // 3. Replace all standalone variables in eq with their assigned values
+    for (const [variable, value] of Object.entries(assignments)) {
+      // Only replace if variable is not 'ans'
+      if (variable.toLowerCase() !== 'ans') {
+        const re = new RegExp(`(?<![a-zA-Z0-9_])${variable}(?![a-zA-Z0-9_])`, 'g');
+        eq = eq.replace(re, value);
+      }
+    }
+    return eq;
   }
 
   // Evaluate current equation on every key press (with 'ans' replaced)
@@ -82,10 +101,15 @@ export default function Home() {
   const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentEquation.trim()) {
       setEquations((prev) => [...prev, currentEquation.trim()]);
-      // Evaluate with 'ans' replaced for results history
-      const eqForApi = getEquationForApi();
-      const result = await evaluateLatex(eqForApi);
-      setResults((prev) => [...prev, result]);
+      // If this is a variable assignment, don't evaluate, just store blank result
+      if (/^\s*[a-zA-Z][a-zA-Z0-9_]*\s*=\s*-?\d+(?:\.\d+)?\s*$/.test(currentEquation.trim())) {
+        setResults((prev) => [...prev, '']);
+      } else {
+        // Evaluate with 'ans' and variables replaced for results history
+        const eqForApi = getEquationForApi();
+        const result = await evaluateLatex(eqForApi);
+        setResults((prev) => [...prev, result]);
+      }
       setCurrentEquation('');
       setAutoCompleteRanges([]);
     }
