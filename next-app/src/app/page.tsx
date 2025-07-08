@@ -46,23 +46,30 @@ export default function Home() {
     // 1. Replace 'ans' as before
     const lastAns = getLastNumericResult();
     eq = eq.replace(/(?<![a-zA-Z0-9_])ans(?![a-zA-Z0-9_])/gi, String(lastAns));
-    // 2. Find variable assignments in history (e.g., x=5)
+    // 2. Find variable assignments in history (e.g., x=5, a=x+y)
     const assignments: Record<string, string> = {};
     for (let i = 0; i < equations.length; ++i) {
-      const match = equations[i].match(/^\s*([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?)/);
+      const match = equations[i].match(/^\s*([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
       if (match) {
         const [, variable, value] = match;
-        assignments[variable] = value;
+        assignments[variable] = value.trim();
       }
     }
-    // 3. Replace all standalone variables in eq with their assigned values
-    for (const [variable, value] of Object.entries(assignments)) {
-      // Only replace if variable is not 'ans'
-      if (variable.toLowerCase() !== 'ans') {
-        const re = new RegExp(`(?<![a-zA-Z0-9_])${variable}(?![a-zA-Z0-9_])`, 'g');
-        eq = eq.replace(re, value);
+    // 3. Recursively replace all standalone variables in eq with their assigned values
+    const replaceVars = (expr: string, depth = 0): string => {
+      if (depth > 10) return expr; // prevent infinite recursion
+      let replaced = expr;
+      for (const [variable, value] of Object.entries(assignments)) {
+        if (variable.toLowerCase() !== 'ans') {
+          const re = new RegExp(`(?<![a-zA-Z0-9_])${variable}(?![a-zA-Z0-9_])`, 'g');
+          replaced = replaced.replace(re, value);
+        }
       }
-    }
+      // If any replacements were made, repeat to resolve chains
+      if (replaced !== expr) return replaceVars(replaced, depth + 1);
+      return replaced;
+    };
+    eq = replaceVars(eq);
     return eq;
   }
 
@@ -450,13 +457,17 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
                     setTimeout(() => inputRef.current?.focus(), 0);
                   }}
                 >
-                  <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                  <span
+                    className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis"
+                    style={{ maxWidth: '320px', minWidth: '0' }}
+                    dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }}
+                  />
                 </div>
               ))}
             </div>
             {/* Live KaTeX Preview */}
             <div
-              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
+              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
               style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
             >
               <span
