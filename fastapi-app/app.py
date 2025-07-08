@@ -80,7 +80,7 @@ def extract_outermost_special_operation(latex_str):
                     left = rest[1:i]
                     right = rest[i + 1:]
 
-            latex_str = "(" + left + ")" + "/" + "(" + right + ")"
+            latex_str = left + "/" + right
             return extract_outermost_special_operation(latex_str)
 
 def extract_elementary_operation(latex_str: str):
