@@ -23,21 +23,28 @@ export default function Home() {
     window.dispatchEvent(event);
   }, [presentationMode]);
 
-  // Helper to get the most recent numeric answer (not error)
+  // Helper to get the most recent result (even if not numeric)
+  function getLastResult() {
+    if (results.length === 0) return 0;
+    // Use the last result in the history (third box)
+    return results[results.length - 1] ?? 0;
+  }
+
+  // Helper to get the most recent numeric result (for ans variable)
   function getLastNumericResult() {
     for (let i = results.length - 1; i >= 0; i--) {
       const val = results[i];
-      if ((typeof val === 'number' && !isNaN(val)) || (!isNaN(Number(val)) && val !== null && val !== undefined && String(val).toLowerCase() !== 'error')) {
-        return Number(val);
-      }
+      if (typeof val === 'number' && !isNaN(val)) return val;
+      if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return Number(val);
     }
     return 0;
   }
 
-  // Replace 'ans' with the last numeric result for API calls
+  // Replace 'ans' as a variable with the last numeric result for API calls
   function getEquationForApi() {
     const lastAns = getLastNumericResult();
-    return currentEquation.replace(/ans/gi, String(lastAns));
+    // Replace only standalone 'ans' (not part of another word)
+    return currentEquation.replace(/(?<![a-zA-Z0-9_])ans(?![a-zA-Z0-9_])/gi, String(lastAns));
   }
 
   // Evaluate current equation on every key press (with 'ans' replaced)
@@ -56,21 +63,6 @@ export default function Home() {
     return () => { ignore = true; };
   }, [currentEquation, results]);
 
-  // Evaluate current equation on every key press
-  useEffect(() => {
-    let ignore = false;
-    async function fetchResult() {
-      if (currentEquation.trim()) {
-        const result = await evaluateLatex(currentEquation.trim());
-        if (!ignore) setCurrentResult(result);
-      } else {
-        setCurrentResult(null);
-      }
-    }
-    fetchResult();
-    return () => { ignore = true; };
-  }, [currentEquation]);
-
   // Helper to update ranges after text change
   function shiftRanges(
     ranges: { start: number; end: number; type: string }[],
@@ -88,19 +80,42 @@ export default function Home() {
   }
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter' && currentEquation.trim()) {
-    setEquations((prev) => [...prev, currentEquation.trim()]);
-    const result = await evaluateLatex(currentEquation.trim());
-    setResults((prev) => [...prev, result]);
-    setCurrentEquation('');
-    setAutoCompleteRanges([]);
-  }
-};
+    if (e.key === 'Enter' && currentEquation.trim()) {
+      setEquations((prev) => [...prev, currentEquation.trim()]);
+      // Evaluate with 'ans' replaced for results history
+      const eqForApi = getEquationForApi();
+      const result = await evaluateLatex(eqForApi);
+      setResults((prev) => [...prev, result]);
+      setCurrentEquation('');
+      setAutoCompleteRanges([]);
+    }
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     const el = inputRef.current;
     if (!el) return;
     const { selectionStart, selectionEnd } = el;
+    // If input is empty and user types +, *, or -: prepend 'ans'
+    if (currentEquation === '' && (e.key === '+' || e.key === '*' || e.key === '-')) {
+      e.preventDefault();
+      insertAtCursor('ans' + e.key, 4 + (e.key === '*' ? 1 : 0), undefined); // cursor after operator
+      return;
+    }
+    // If input is empty and user types /: insert \frac{ans}{} and place cursor in denominator
+    if (currentEquation === '' && e.key === '/') {
+      e.preventDefault();
+      const frac = '\\frac{ans}{}';
+      setCurrentEquation(frac);
+      setAutoCompleteRanges([
+        { start: 0, end: frac.length, type: 'frac' },
+      ]);
+      setTimeout(() => {
+        el.focus();
+        // Cursor inside denominator {}
+        el.setSelectionRange(frac.length - 1, frac.length - 1);
+      }, 0);
+      return;
+    }
     // Autocomplete for (, {, ^, _, \frac
     if (e.key === '(') {
       e.preventDefault();
@@ -368,7 +383,7 @@ export default function Home() {
                   }}
                 >
                   <span className="text-foreground font-bold ml-2">
-                    {results.slice().reverse()[i] !== undefined ? String(results.slice().reverse()[i]) : ''}
+                    {results[i] !== undefined ? String(results[i]) : ''}
                   </span>
                 </div>
               ))}
