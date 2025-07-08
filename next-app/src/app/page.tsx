@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, KeyboardEvent, ChangeEvent, useRef } from 'react';
+import { useState, KeyboardEvent, ChangeEvent, useRef, useEffect } from 'react';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
 import 'computer-modern/index.css';
@@ -24,12 +24,60 @@ export default function Home() {
     window.dispatchEvent(event);
   }, [presentationMode]);
 
+  // Helper to get the most recent result (even if not numeric)
+  function getLastResult() {
+    if (results.length === 0) return 0;
+    // Use the last result in the history (third box)
+    return results[results.length - 1] ?? 0;
+  }
+
+  // Helper to get the most recent numeric result (for ans variable)
+  function getLastNumericResult() {
+    for (let i = results.length - 1; i >= 0; i--) {
+      const val = results[i];
+      if (typeof val === 'number' && !isNaN(val)) return val;
+      if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return Number(val);
+    }
+    return 0;
+  }
+
+  // Replace 'ans' and user variables with their assigned values for API calls
+  function getEquationForApi() {
+    let eq = currentEquation;
+    const lastAns = getLastNumericResult();
+    eq = eq.replace(/(?<![a-zA-Z0-9_])ans(?![a-zA-Z0-9_])/gi, String(lastAns));
+    const assignments: Record<string, string> = {};
+    for (let i = 0; i < equations.length; ++i) {
+      const match = equations[i].match(/^\s*([a-zA-Z][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
+      if (match) {
+        const [, variable, value] = match;
+        assignments[variable] = value.trim();
+      }
+    }
+    const replaceVars = (expr: string, depth = 0): string => {
+      if (depth > 10) return expr;
+      let replaced = expr;
+      for (const [variable, value] of Object.entries(assignments)) {
+        if (variable.toLowerCase() !== 'ans') {
+          const re = new RegExp(`(?<![a-zA-Z0-9_])${variable}(?![a-zA-Z0-9_])`, 'g');
+          replaced = replaced.replace(re, value);
+        }
+      }
+      // If any replacements were made, repeat to resolve chains
+      if (replaced !== expr) return replaceVars(replaced, depth + 1);
+      return replaced;
+    };
+    eq = replaceVars(eq);
+    return eq;
+  }
+
   // Evaluate current equation on every key press
   useEffect(() => {
     let ignore = false;
     async function fetchResult() {
       if (currentEquation.trim()) {
-        const result = await evaluateLatex(currentEquation.trim());
+        const eqForApi = getEquationForApi();
+        const result = await evaluateLatex(eqForApi);
         if (!ignore) setCurrentResult(result);
       } else {
         setCurrentResult(null);
@@ -37,7 +85,7 @@ export default function Home() {
     }
     fetchResult();
     return () => { ignore = true; };
-  }, [currentEquation]);
+  }, [currentEquation, results]);
 
   // Helper to update ranges after text change
   function shiftRanges(
@@ -56,19 +104,45 @@ export default function Home() {
   }
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter' && currentEquation.trim()) {
-    setEquations((prev) => [...prev, currentEquation.trim()]);
-    const result = await evaluateLatex(currentEquation.trim());
-    setResults((prev) => [...prev, result]);
-    setCurrentEquation('');
-    setAutoCompleteRanges([]);
-  }
-};
+    if (e.key === 'Enter' && currentEquation.trim()) {
+      setEquations((prev) => [...prev, currentEquation.trim()]);
+      if (/^\s*[a-zA-Z][a-zA-Z0-9_]*\s*=\s*-?\d+(?:\.\d+)?\s*$/.test(currentEquation.trim())) {
+        setResults((prev) => [...prev, '']);
+      } else {
+        // Evaluate with 'ans' and variables replaced for results history
+        const eqForApi = getEquationForApi();
+        const result = await evaluateLatex(eqForApi);
+        setResults((prev) => [...prev, result]);
+      }
+      setCurrentEquation('');
+      setAutoCompleteRanges([]);
+    }
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     const el = inputRef.current;
     if (!el) return;
     const { selectionStart, selectionEnd } = el;
+    // If input is empty and user types +, *, or -: prepend 'ans'
+    if (currentEquation === '' && (e.key === '+' || e.key === '*' || e.key === '-')) {
+      e.preventDefault();
+      insertAtCursor('ans' + e.key, 4 + (e.key === '*' ? 1 : 0), undefined);
+      return;
+    }
+    // If input is empty and user types /: insert \frac{ans}{} and place cursor in denominator
+    if (currentEquation === '' && e.key === '/') {
+      e.preventDefault();
+      const frac = '\\frac{ans}{}';
+      setCurrentEquation(frac);
+      setAutoCompleteRanges([
+        { start: 0, end: frac.length, type: 'frac' },
+      ]);
+      setTimeout(() => {
+        el.focus();
+        el.setSelectionRange(frac.length - 1, frac.length - 1);
+      }, 0);
+      return;
+    }
     // Autocomplete for (, {, ^, _, \frac
     if (e.key === '(') {
       e.preventDefault();
@@ -84,12 +158,9 @@ export default function Home() {
       insertAtCursor('_{}', 2, 'sub');
     } else if (e.key === '/') {
       e.preventDefault();
-      // Smart fraction: move everything to the left (until LaTeX command, operator, or start) into numerator
       const pos = el.selectionStart || 0;
       const val = currentEquation;
-      // Find the last LaTeX command, operator, or start
       const left = val.slice(0, pos);
-      // Regex: match last LaTeX command (\\[a-zA-Z]+), or operator, or start
       const latexOrOp = /(?:\\[a-zA-Z]+|[+\-*/^_(){}=, ])/g;
       let lastIndex = 0;
       let match;
@@ -127,7 +198,6 @@ export default function Home() {
       e.preventDefault();
       insertAtCursor('\\cdot', 6, 'times'); // cursor after \times
     } else if (e.key === '\\') {
-      // Wait for possible frac
       setTimeout(() => {
         const val = el.value;
         const pos = el.selectionStart || 0;
@@ -137,7 +207,7 @@ export default function Home() {
       }, 0);
     } else if (
       e.key === 'Backspace' &&
-      selectionStart === selectionEnd // no selection
+      selectionStart === selectionEnd
     ) {
       // Check if at end of an autocompleted command
       const pos = selectionStart || 0;
@@ -167,7 +237,6 @@ export default function Home() {
         }, 0);
         return;
       }
-      // ...existing code for backspace restore...
       if (currentEquation === '' && equations.length > 0) {
         e.preventDefault();
         const last = equations[equations.length - 1];
@@ -206,22 +275,22 @@ export default function Home() {
   };
 
   async function evaluateLatex(latex: string): Promise<number | string | null> {
-    try {
-      const response = await fetch('http://localhost:8000/evaluateLatex', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latexExpression: latex }),
-      });
-      if (!response.ok) throw new Error('Network error');
-      const data = await response.json();
-      return data.result;
-    } catch (e) {
-      console.error(e);
-      return 'Error';
-    }
+  try {
+    const response = await fetch('http://localhost:8000/evaluateLatex', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ latexExpression: latex }),
+    });
+    if (!response.ok) throw new Error('Network error');
+    const data = await response.json();
+    return data.result;
+  } catch (e) {
+    console.error(e);
+    return 'Error';
   }
+}
 
-  const inputHistoryRef = useRef<HTMLDivElement>(null);
+const inputHistoryRef = useRef<HTMLDivElement>(null);
   const previewHistoryRef = useRef<HTMLDivElement>(null);
   const resultHistoryRef = useRef<HTMLDivElement>(null);
 
@@ -295,10 +364,10 @@ export default function Home() {
     <main className="flex-1 bg-background flex items-center justify-center relative">
       {/* Presentation Mode Toggle Button (always visible, fixed position) */}
       <button
-        className="absolute top-5 left-3 px-6 py-2 rounded bg-background text-foreground font-bold transition z-50 border border-foreround"
+        className="absolute top-5 left-3 px-6 py-2 rounded bg-background text-foreground font-bold z-50 border border-foreround cursor-pointer group"
         onClick={() => setPresentationMode((v) => !v)}
       >
-        {presentationMode ? 'Exit Presentation' : 'Presentation Mode'}
+        <div className="group-hover:scale-105">{presentationMode ? 'Exit Presentation' : 'Presentation Mode'}</div>
       </button>
       {presentationMode ? (
         <div className="flex flex-col gap-4 w-full max-w-3xl items-center">
@@ -386,13 +455,17 @@ export default function Home() {
                     setTimeout(() => inputRef.current?.focus(), 0);
                   }}
                 >
-                  <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                  <span
+                    className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis"
+                    style={{ maxWidth: '320px', minWidth: '0' }}
+                    dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }}
+                  />
                 </div>
               ))}
             </div>
             {/* Live KaTeX Preview */}
             <div
-              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
+              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
               style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
             >
               <span

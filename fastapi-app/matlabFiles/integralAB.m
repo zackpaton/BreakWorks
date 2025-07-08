@@ -8,6 +8,12 @@ function result = integralAB(a, b, expression, var)
         var = char(var);
     end
 
+    if isempty(regexp(expression, var, 'once'))
+        scalar = eval(expression);
+        result = scalar * (b - a);
+        return;
+    end
+
     pattern = ['\<' var '\>'];
     expression = regexprep(expression, pattern, 'x');
 
@@ -18,7 +24,6 @@ function result = integralAB(a, b, expression, var)
     a = double(a);
     b = double(b);
 
-    syms('x');                           
     func = str2func(['@(x)' expression]);                 
     result = integral(func, a, b);
 
