@@ -16,7 +16,7 @@ app = FastAPI(lifespan=lifespan_func)
 
 def extract_elementary_operation(latex_str: str):
     expr = latex_str.strip()
-    
+
     # Helper: find top-level operator (not inside braces)
     def find_top_level(expr, ops):
         depth = 0
@@ -56,7 +56,7 @@ def operate(op: str, left: str, right: str):
     right = float(right)
     match op:
         case '+':
-            return matlab_engine.sum(left, right)
+            return matlab_engine.su(left, right)
         case '-':
             return matlab_engine.sub(left, right)
         case '*':
@@ -68,4 +68,4 @@ def operate(op: str, left: str, right: str):
 
 @app.get("/")
 async def home():
-    return parse_latex("3*5")
+    return parse_latex("3+5")
