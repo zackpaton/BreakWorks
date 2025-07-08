@@ -46,7 +46,7 @@ def extract_outermost_special_operation(latex_str):
     if rest == "":
         return extract_elementary_operation(latex_str)
 
-def extract_elementary_operation(latex_str: str):
+def extract_elementary_operation(latex_str: str) -> float:
     expr = latex_str.strip()
 
     # Helper: find top-level operator (not inside braces)
