@@ -25,11 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
-<<<<<<< HEAD
-    "tailwindcss": "^4",
-=======
     "tailwindcss": "^4.1.11",
->>>>>>> 8064e77fd93fd551ac9d4632f8df2a2787d520c4
     "typescript": "^5"
   },
   "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",

@@ -13,6 +13,7 @@ export default function Home() {
     type: string;
   }[]>([]); // Track autocompleted commands
   const inputRef = useRef<HTMLInputElement>(null);
+  const [results, setResults] = useState<(number | string | null)[]>([]);
 
   // Helper to update ranges after text change
   function shiftRanges(
@@ -30,13 +31,15 @@ export default function Home() {
     });
   }
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && currentEquation.trim()) {
-      setEquations([...equations, currentEquation.trim()]);
-      setCurrentEquation('');
-      setAutoCompleteRanges([]);
-    }
-  };
+  const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === 'Enter' && currentEquation.trim()) {
+    setEquations((prev) => [...prev, currentEquation.trim()]);
+    const result = await evaluateLatex(currentEquation.trim());
+    setResults((prev) => [...prev, result]);
+    setCurrentEquation('');
+    setAutoCompleteRanges([]);
+  }
+};
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     const el = inputRef.current;
@@ -57,19 +60,28 @@ export default function Home() {
       insertAtCursor('_{}', 2, 'sub');
     } else if (e.key === '/') {
       e.preventDefault();
-      // Smart fraction: if char to left is a number, move it into numerator
+      // Smart fraction: move everything to the left (until LaTeX command, operator, or start) into numerator
       const pos = el.selectionStart || 0;
       const val = currentEquation;
-      const leftChar = val[pos - 1];
-      if (leftChar && /[0-9]/.test(leftChar)) {
-        // Remove the number to the left and insert \frac{num}{}
-        const before = val.slice(0, pos - 1);
+      // Find the last LaTeX command, operator, or start
+      const left = val.slice(0, pos);
+      // Regex: match last LaTeX command (\\[a-zA-Z]+), or operator, or start
+      const latexOrOp = /(?:\\[a-zA-Z]+|[+\-*/^_(){}=, ])/g;
+      let lastIndex = 0;
+      let match;
+      let m;
+      while ((m = latexOrOp.exec(left)) !== null) {
+        lastIndex = m.index + m[0].length;
+      }
+      const toMove = left.slice(lastIndex);
+      if (toMove.length > 0) {
+        const before = val.slice(0, lastIndex);
         const after = val.slice(pos);
-        const frac = `\\frac{${leftChar}}{}`;
+        const frac = `\\frac{${toMove}}{}`;
         const newValue = before + frac + after;
         setCurrentEquation(newValue);
         setAutoCompleteRanges([
-          ...shiftRanges(autoCompleteRanges, pos - 1, frac.length - 1),
+          ...shiftRanges(autoCompleteRanges, lastIndex, frac.length - toMove.length),
           {
             start: before.length,
             end: before.length + frac.length,
@@ -169,8 +181,24 @@ export default function Home() {
     setCurrentEquation(e.target.value);
   };
 
+  async function evaluateLatex(latex: string): Promise<number | string | null> {
+  try {
+    const response = await fetch('http://localhost:8000/evaluateLatex', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ latexExpression: latex }),
+    });
+    if (!response.ok) throw new Error('Network error');
+    const data = await response.json();
+    return data.result;
+  } catch (e) {
+    console.error(e);
+    return 'Error';
+  }
+}
+
   return (
-    <main className="flex-1  bg-background dark:bg-gray-900 flex items-center justify-center">
+    <main className="flex-1  bg-background flex items-center justify-center">
 
       <div className="flex gap-8">
         {/* LaTeX Input + History */}
@@ -187,7 +215,7 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="font-mono text-foreground text-l flex-1 text-left overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
+                <span className="font-mono text-foreground text-l flex-1 text-left whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }}>{eq}</span>
               </div>
             ))}
           </div>
@@ -199,10 +227,8 @@ export default function Home() {
             onKeyPress={handleKeyPress}
             onKeyDown={handleKeyDown}
             placeholder="Enter LaTeX..."
-            className="w-full p-3 border border-foreground rounded-lg 
-                     bg-background text-foreground
-                     focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap"
-            style={{ maxWidth: '320px', minWidth: '0' }}
+            className="w-full border border-foreground rounded-lg bg-background text-foreground focus:ring-2 focus:border-transparent font-mono placeholder-gray-400 text-l overflow-x-auto whitespace-nowrap px-3 py-2 flex items-center" // reduced py-3 to py-2, added flex and items-center
+            style={{ maxWidth: '320px', minWidth: '0', minHeight: '2.5em', height: '2.5em', display: 'flex', alignItems: 'center' }} // set minHeight and height to match KaTeX preview
             autoComplete="off"
             spellCheck={false}
           />
@@ -221,11 +247,44 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="text-foreground text-l flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
+                <span className="text-foreground text-l flex-1 text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
               </div>
             ))}
           </div>
           {/* Live KaTeX Preview */}
+          <div
+            className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap scrollbar-hide"
+            style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
+          >
+            <span
+              dangerouslySetInnerHTML={{
+                __html: katex.renderToString(currentEquation, {
+                  throwOnError: false,
+                }),
+              }}
+            />
+          </div>
+        </div>
+        {/* BOX NUMBER 3 START */}
+        <div className="bg-background-50 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+          {/* KaTeX History (bottom-up) */}
+          <div className="w-full flex flex-col gap-2 mb-4 justify-end flex-1" style={{ minHeight: '200px' }}>
+            {equations.map((eq, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
+                onClick={() => {
+                  setCurrentEquation(eq);
+                  setAutoCompleteRanges([]);
+                  setTimeout(() => inputRef.current?.focus(), 0);
+                }}
+              >
+                <span className="text-foreground font-bold ml-2">
+                  {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
+                </span>
+              </div>
+            ))}
+          </div>
           <div
             className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
             style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
