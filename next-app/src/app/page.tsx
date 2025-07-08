@@ -221,7 +221,7 @@ export default function Home() {
 }
 
   return (
-    <main className="flex-1 bg-background flex items-center justify-center min-h-screen relative">
+    <main className="flex-1 bg-background flex items-center justify-center relative">
       {/* Presentation Mode Toggle Button (always visible, fixed position) */}
       <button
         className="absolute top-5 left-3 px-6 py-2 rounded bg-background text-foreground font-bold transition z-50 border border-foreround"
@@ -345,7 +345,7 @@ export default function Home() {
               style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
             >
               <span className="text-foreground font-bold ml-2">
-                {currentResult !== undefined && currentResult !== null ? String(currentResult) : ''}
+                {currentResult !== undefined && currentResult !== null && String(currentResult).toLowerCase() !== 'error' ? String(currentResult) : ''}
               </span>
             </div>
           </div>
