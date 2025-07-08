@@ -1,7 +1,7 @@
 'use client'
 import NavBar from "@/components/NavBar";
 import { ThemeProvider } from 'next-themes'
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import React, { useState, useEffect } from 'react';
 
