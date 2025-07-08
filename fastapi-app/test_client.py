@@ -4,7 +4,7 @@ import requests
 url = "http://localhost:8000/evaluateLatex"
 
 # The LaTeX expression you want to evaluate
-latex_expression = r"\int_{0}^{10} k+1 \, dk"
+latex_expression = r"\int_{3}^{5} \sum_{k=1}^{10} k+1 \, dk"
 
 # Prepare the request payload
 payload = {

@@ -72,7 +72,7 @@ def extract_outermost_special_operation(latex_str):
             if remain == "":
                 return matlab_engine.sigma(var, lower, upper, operand)
             return matlab_engine.sigma(
-                var, lower, upper, extract_outermost_special_operation(operand)
+                var, lower, upper, str(extract_outermost_special_operation(operand))
             )
 
         case r"\int":
@@ -95,7 +95,7 @@ def extract_outermost_special_operation(latex_str):
             if remain == "":
                 return matlab_engine.integralAB(lower, upper, operand, var)
             return matlab_engine.integralAB(
-                lower, upper, extract_outermost_special_operation(operand), var
+                lower, upper, str(extract_outermost_special_operation(operand)), var
             )
 
         case r"\frac":
