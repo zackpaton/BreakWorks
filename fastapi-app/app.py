@@ -74,8 +74,8 @@ def extract_outermost_special_operation(latex_str):
             if not match:
                 return None
             lower, upper, operand, var = match.groups()
-            lower = int(lower)
-            upper = int(upper)
+            lower = float(lower)
+            upper = float(upper)
             letter = var
             operand = operand.strip() 
 
@@ -86,15 +86,7 @@ def extract_outermost_special_operation(latex_str):
                     break
             
             if remain == "":
-                print(lower)
-                print(upper)
-                print(operand)
-                print(var)
                 return matlab_engine.integralAB(lower, upper, operand, var)
-            print(lower)
-            print(upper)
-            print(operand)
-            print(var)
             return matlab_engine.integralAB(lower, upper, extract_outermost_special_operation(operand), var) 
           
 

@@ -11,6 +11,9 @@ function result = integralAB(a, b, expression, var)
     expression = regexprep(expression, '(?<!\.)\^', '.^');
     expression = regexprep(expression, '(?<!\.)\*', '.*');
     expression = regexprep(expression, '(?<!\.)\/', './');
+    
+    a = double(a);
+    b = double(b);
 
     syms(var);                           
     func = str2func(['@(' var ')' expression]);                 
