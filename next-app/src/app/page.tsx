@@ -3,6 +3,7 @@
 import { useState, useEffect, KeyboardEvent, ChangeEvent, useRef } from 'react';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
+import 'computer-modern/index.css';
 
 export default function Home() {
   const [equations, setEquations] = useState<string[]>([]);
@@ -302,11 +303,14 @@ export default function Home() {
       {presentationMode ? (
         <div className="flex flex-col gap-4 w-full max-w-3xl items-center">
           {equations.map((eq, i) => (
+            <div>
+            
             <div
               key={i}
               className="flex flex-row items-center justify-center gap-8 w-full"
               style={{ minHeight: '2.5em' }}
             >
+              
               <span
                 className="text-foreground text-l font-mono flex-1 text-center overflow-hidden text-ellipsis whitespace-nowrap"
                 style={{ minWidth: '250px', maxWidth: '350px' }}
@@ -316,11 +320,15 @@ export default function Home() {
                 }}
               />
               <span
-                className="text-foreground font-bold flex-1 text-center ml-2"
+                className="text-foreground font-bold flex-1 text-center ml-2 font-computer-modern"
                 style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               >
                 {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
               </span>
+            </div>
+            {i < equations.length - 1 && (
+              <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-gray-400 to-transparent"></div>
+            )}
             </div>
           ))}
         </div>
