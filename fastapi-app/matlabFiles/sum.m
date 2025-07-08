@@ -1,6 +1,6 @@
 function result = sum(num0, num1)
-%This function multiplies two numbers together
+%This function adds two numbers together
 
-result = num0 + num1;
+    result = num0 + num1;
 
 end

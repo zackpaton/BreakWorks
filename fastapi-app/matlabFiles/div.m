@@ -1,6 +1,6 @@
 function result = div(num0, num1)
-%This function multiplies two numbers together
+%This function divides two numbers
 
-result = num0 / num1;
+    result = num0 / num1;
 
 end
