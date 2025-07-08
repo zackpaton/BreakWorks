@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-class LatexExpRequest(BaseModel):
+class LatexExprRequest(BaseModel):
     latexExpression: str
 
 matlab_engine = None
@@ -77,6 +77,6 @@ def operate(op: str, left: str, right: str):
         case '^':
             return matlab_engine.pow(left, right)
 
-@app.get("/evaluateLatex")
-async def home(request: LatexExpRequest):
-    return parse_latex(request.latexExpression)
+@app.post("/evaluateLatex")
+async def home(request: LatexExprRequest):
+    return { "result": parse_latex(request.latexExpression) }
