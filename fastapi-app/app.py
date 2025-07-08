@@ -174,7 +174,7 @@ def operate(op: str, left: str, right: str):
 @app.post("/evaluateLatex")
 async def evaluate_latex(request: LatexExprRequest):
     result = parse_latex(request.latexExpression)
-    if result == None:
+    if result is None:
         return {"result": "Failed to process"}
     else:
         return {"result": result}
