@@ -170,7 +170,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+    <main className="flex-1  bg-white dark:bg-gray-900 flex items-center justify-center">
       <div className="flex gap-8">
         {/* LaTeX Input + History */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center">
@@ -239,6 +239,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
