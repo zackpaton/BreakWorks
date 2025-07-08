@@ -270,8 +270,7 @@ export default function Home() {
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
               >
-                <span className="text-foreground text-l flex-1 text-left font-mono overflow-x-auto whitespace-nowrap" style={{ maxWidth: '320px', minWidth: '0' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(eq, { throwOnError: false }) }} />
-                <span className="text-green-600 font-bold ml-2">
+                <span className="text-foreground font-bold ml-2">
                   {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
                 </span>
               </div>
