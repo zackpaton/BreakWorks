@@ -10,4 +10,6 @@ function result = sigma(var, lower, upper, expr)
 
     % Do the summation
     result = double(symsum(f, sym(var), lower, upper));
+    result = round(result, 3);
+
 end

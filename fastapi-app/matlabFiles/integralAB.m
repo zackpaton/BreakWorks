@@ -27,4 +27,6 @@ function result = integralAB(a, b, expression, var)
     func = str2func(['@(x)' expression]);                 
     result = integral(func, a, b);
 
+    result = round(result, 3);
+
 end
