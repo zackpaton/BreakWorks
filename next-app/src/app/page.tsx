@@ -425,10 +425,12 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
               >
                 {results[expandedIndex] && Array.isArray(results[expandedIndex])
                   ? results[expandedIndex].length > 0
-                    ? results[expandedIndex].map((item, idx) => <div key={idx}>{String(item)}</div>)
+                    ? results[expandedIndex].map((item, idx) => (
+                        <div key={idx} style={{ marginBottom: '1.5em' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(String(item), { throwOnError: false }) }} />
+                      ))
                     : ''
                   : results[expandedIndex] !== undefined && results[expandedIndex] !== null
-                    ? <div>{String(results[expandedIndex])}</div>
+                    ? <div dangerouslySetInnerHTML={{ __html: katex.renderToString(String(results[expandedIndex]), { throwOnError: false }) }} />
                     : ''}
               </span>
             </div>
@@ -531,9 +533,13 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
                 {(() => {
                   const res = results.slice().reverse()[i];
                   if (Array.isArray(res)) {
-                    return res.length > 0 ? String(res[res.length - 1]) : '';
+                    return res.length > 0 ? (
+                      <span dangerouslySetInnerHTML={{ __html: katex.renderToString(String(res[res.length - 1]), { throwOnError: false }) }} />
+                    ) : '';
                   }
-                  return res !== undefined && res !== null ? String(res) : '';
+                  return res !== undefined && res !== null
+                    ? <span dangerouslySetInnerHTML={{ __html: katex.renderToString(String(res), { throwOnError: false }) }} />
+                    : '';
                 })()}
               </span>
             </div>
@@ -546,9 +552,13 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
           <span className="text-foreground font-bold ml-2">
             {(() => {
               if (Array.isArray(currentResult)) {
-                return currentResult.length > 0 ? String(currentResult[currentResult.length - 1]) : '';
+                return currentResult.length > 0 ? (
+                  <span dangerouslySetInnerHTML={{ __html: katex.renderToString(String(currentResult[currentResult.length - 1]), { throwOnError: false }) }} />
+                ) : '';
               }
-              return currentResult !== undefined && currentResult !== null && String(currentResult).toLowerCase() !== 'error' ? String(currentResult) : '';
+              return currentResult !== undefined && currentResult !== null && String(currentResult).toLowerCase() !== 'error'
+                ? <span dangerouslySetInnerHTML={{ __html: katex.renderToString(String(currentResult), { throwOnError: false }) }} />
+                : '';
             })()}
           </span>
         </div>
