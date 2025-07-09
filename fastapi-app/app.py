@@ -48,7 +48,6 @@ def extract_outermost_special_operation(latex_str):
             rest = expr[len(op) :].lstrip()
             break
 
-    print(rest)
     if rest == "":
         return extract_elementary_operation(latex_str)
 
@@ -71,9 +70,16 @@ def extract_outermost_special_operation(latex_str):
 
             if remain == "":
                 return matlab_engine.sigma(var, lower, upper, operand)
-            return matlab_engine.sigma(
-                var, lower, upper, str(extract_outermost_special_operation(operand))
-            )
+            next_result = extract_outermost_special_operation(operand)
+            
+            if next_result.is_integer():
+                next_result = str(int(next_result))
+            else:
+                next_result = str(next_result)
+            
+            prefix = "\sum_{" + var + "=" + str(lower) + "}^{" + str(upper) + "}"
+            intermediate = prefix + next_result
+            return [intermediate, matlab_engine.sigma(var, lower, upper, next_result)]
 
         case r"\int":
             pattern = r"\\int_\{(\d+)\}\^\{(\d+)\}\s*(.+)\\, d([a-zA-Z])"
@@ -94,8 +100,22 @@ def extract_outermost_special_operation(latex_str):
 
             if remain == "":
                 return matlab_engine.integralAB(lower, upper, operand, var)
-            next_result = str(extract_outermost_special_operation(operand))
-            return [operand, matlab_engine.integralAB(
+            next_result = extract_outermost_special_operation(operand)
+            
+            if next_result.is_integer():
+                next_result = str(int(next_result))
+            else:
+                next_result = str(next_result)
+
+            if lower.is_integer():
+                lower = int(lower)
+            if upper.is_integer():
+                upper = int(upper)
+            
+            prefix = "\int_{" + str(lower) + "}^{" + str(upper) + "}"
+            suffix = "\, d" + var
+            intermediate = prefix + next_result + suffix
+            return [intermediate, matlab_engine.integralAB(
                 lower, upper, next_result, var
             )]
 
