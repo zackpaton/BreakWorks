@@ -407,11 +407,11 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
             // Only show the expanded entry and its solution list (in place of the single-value solution)
             <div
               className="flex flex-row items-center justify-center gap-8 w-full"
-              style={{ minHeight: '2.5em' }}
+              style={{ minHeight: '2.5em', justifyContent: 'center', alignItems: 'center' }}
             >
               <span
                 className="text-foreground text-l font-mono flex-1 text-center overflow-hidden text-ellipsis whitespace-nowrap"
-                style={{ minWidth: '250px', maxWidth: '350px', cursor: 'pointer' }}
+                style={{ minWidth: '250px', maxWidth: '350px', cursor: 'pointer', display: 'none' }}
                 title={equations[expandedIndex]}
                 dangerouslySetInnerHTML={{
                   __html: katex.renderToString(equations[expandedIndex], { throwOnError: false }),
@@ -420,17 +420,26 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
               />
               <span
                 className="text-foreground font-bold flex-1 text-center ml-2"
-                style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'pre-line', cursor: 'pointer' }}
+                style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'pre-line', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
                 onClick={() => setExpandedIndex(null)}
               >
+                <div style={{ marginBottom: '1.5em', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                  <span
+                    className="text-foreground text-l font-mono text-center"
+                    style={{ minWidth: '250px', maxWidth: '350px', wordBreak: 'break-word' }}
+                    dangerouslySetInnerHTML={{ __html: katex.renderToString(equations[expandedIndex], { throwOnError: false }) }}
+                  />
+                </div>
                 {results[expandedIndex] && Array.isArray(results[expandedIndex])
                   ? results[expandedIndex].length > 0
                     ? results[expandedIndex].map((item, idx) => (
-                        <div key={idx} style={{ marginBottom: '1.5em' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(String(item), { throwOnError: false }) }} />
+                        <div key={idx} style={{ marginBottom: '1.5em', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                          <span dangerouslySetInnerHTML={{ __html: katex.renderToString(String(item), { throwOnError: false }) }} />
+                        </div>
                       ))
                     : ''
                   : results[expandedIndex] !== undefined && results[expandedIndex] !== null
-                    ? <div dangerouslySetInnerHTML={{ __html: katex.renderToString(String(results[expandedIndex]), { throwOnError: false }) }} />
+                    ? <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: katex.renderToString(String(results[expandedIndex]), { throwOnError: false }) }} />
                     : ''}
               </span>
             </div>
