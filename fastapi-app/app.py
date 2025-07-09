@@ -95,7 +95,7 @@ def extract_outermost_special_operation(latex_str):
             if remain == "":
                 return matlab_engine.integralAB(lower, upper, operand, var)
             next_result = str(extract_outermost_special_operation(operand))
-            return [next_result, matlab_engine.integralAB(
+            return [operand, matlab_engine.integralAB(
                 lower, upper, next_result, var
             )]
 
