@@ -71,6 +71,8 @@ def extract_outermost_special_operation(latex_str):
             if remain == "":
                 return matlab_engine.sigma(var, lower, upper, operand)
             next_result = extract_outermost_special_operation(operand)
+            if isinstance(next_result, list):
+                next_result = next_result[-1]
             
             if next_result.is_integer():
                 next_result = str(int(next_result))
@@ -79,6 +81,9 @@ def extract_outermost_special_operation(latex_str):
             
             prefix = "\sum_{" + var + "=" + str(lower) + "}^{" + str(upper) + "}"
             intermediate = prefix + next_result
+
+            if isinstance(next_result, list):
+                intermediate = [next_result[0:len(next_result) - 1], intermediate]
             return [intermediate, matlab_engine.sigma(var, lower, upper, next_result)]
 
         case r"\int":
@@ -101,6 +106,8 @@ def extract_outermost_special_operation(latex_str):
             if remain == "":
                 return matlab_engine.integralAB(lower, upper, operand, var)
             next_result = extract_outermost_special_operation(operand)
+            if isinstance(next_result, list):
+                next_result = next_result[-1]
             
             if next_result.is_integer():
                 next_result = str(int(next_result))
@@ -114,7 +121,12 @@ def extract_outermost_special_operation(latex_str):
             
             prefix = "\int_{" + str(lower) + "}^{" + str(upper) + "}"
             suffix = "\, d" + var
+                
             intermediate = prefix + next_result + suffix
+
+            if isinstance(next_result, list):
+                intermediate = [next_result[0:len(next_result) - 1], intermediate]
+            print(intermediate)
             return [intermediate, matlab_engine.integralAB(
                 lower, upper, next_result, var
             )]
