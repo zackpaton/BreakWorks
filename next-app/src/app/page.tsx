@@ -3,7 +3,6 @@
 import { useState, KeyboardEvent, ChangeEvent, useRef, useEffect } from 'react';
 import 'katex/dist/katex.min.css';
 import katex from 'katex';
-import 'computer-modern/index.css';
 
 export default function Home() {
   const [equations, setEquations] = useState<string[]>([]);
@@ -17,11 +16,18 @@ export default function Home() {
   const [results, setResults] = useState<(number | string | null)[]>([]);
   const [presentationMode, setPresentationMode] = useState(false);
   const [currentResult, setCurrentResult] = useState<string | number | null>(null);
+  // Add state for expanded entry in presentation mode
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   // When presentationMode changes, dispatch a custom event for layout.tsx
   useEffect(() => {
     const event = new CustomEvent('presentationModeToggle', { detail: { presentationMode } });
     window.dispatchEvent(event);
+  }, [presentationMode]);
+
+  // Reset expandedIndex when leaving presentation mode
+  useEffect(() => {
+    if (!presentationMode) setExpandedIndex(null);
   }, [presentationMode]);
 
   // Helper to get the most recent result (even if not numeric)
@@ -371,35 +377,62 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
       </button>
       {presentationMode ? (
         <div className="flex flex-col gap-4 w-full max-w-3xl items-center">
-          {equations.map((eq, i) => (
-            <div>
-            
+          {expandedIndex === null ? (
+            // Show all entries as usual
+            equations.map((eq, i) => (
+              <div
+                key={i}
+                className="flex flex-row items-center justify-center gap-8 w-full"
+                style={{ minHeight: '2.5em' }}
+              >
+                <span
+                  className="text-foreground text-l font-mono flex-1 text-center overflow-hidden text-ellipsis whitespace-nowrap"
+                  style={{ minWidth: '250px', maxWidth: '350px', cursor: 'pointer' }}
+                  title={eq}
+                  dangerouslySetInnerHTML={{
+                    __html: katex.renderToString(eq, { throwOnError: false }),
+                  }}
+                  onClick={() => setExpandedIndex(i)}
+                />
+                <span
+                  className="text-foreground font-bold flex-1 text-center ml-2"
+                  style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  onClick={() => setExpandedIndex(i)}
+                >
+                  {results[i] !== undefined && results[i] !== null ? (Array.isArray(results[i]) ? String(results[i][results[i].length - 1]) : String(results[i])) : ''}
+                </span>
+              </div>
+            ))
+          ) : (
+            // Only show the expanded entry and its solution list (in place of the single-value solution)
             <div
-              key={i}
               className="flex flex-row items-center justify-center gap-8 w-full"
               style={{ minHeight: '2.5em' }}
             >
-              
               <span
                 className="text-foreground text-l font-mono flex-1 text-center overflow-hidden text-ellipsis whitespace-nowrap"
-                style={{ minWidth: '250px', maxWidth: '350px' }}
-                title={eq}
+                style={{ minWidth: '250px', maxWidth: '350px', cursor: 'pointer' }}
+                title={equations[expandedIndex]}
                 dangerouslySetInnerHTML={{
-                  __html: katex.renderToString(eq, { throwOnError: false }),
+                  __html: katex.renderToString(equations[expandedIndex], { throwOnError: false }),
                 }}
+                onClick={() => setExpandedIndex(null)}
               />
               <span
-                className="text-foreground font-bold flex-1 text-center ml-2 font-computer-modern"
-                style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                className="text-foreground font-bold flex-1 text-center ml-2"
+                style={{ minWidth: '250px', maxWidth: '350px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'pre-line', cursor: 'pointer' }}
+                onClick={() => setExpandedIndex(null)}
               >
-                {results[i] !== undefined && results[i] !== null ? String(results[i]) : ''}
+                {results[expandedIndex] && Array.isArray(results[expandedIndex])
+                  ? results[expandedIndex].length > 0
+                    ? results[expandedIndex].map((item, idx) => <div key={idx}>{String(item)}</div>)
+                    : ''
+                  : results[expandedIndex] !== undefined && results[expandedIndex] !== null
+                    ? <div>{String(results[expandedIndex])}</div>
+                    : ''}
               </span>
             </div>
-            {i < equations.length - 1 && (
-              <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-gray-400 to-transparent"></div>
-            )}
-            </div>
-          ))}
+          )}
         </div>
       ) : (
         <div className="flex gap-8 max-h-[75vh] overflow-y-auto">
@@ -479,36 +512,47 @@ const inputHistoryRef = useRef<HTMLDivElement>(null);
           </div>
           {/* BOX NUMBER 3 START */}
           <div className="bg-background rounded-lg shadow-lg p-6 min-w-[350px] flex flex-col items-stretch justify-center border border-foreground">
+        <div
+          ref={resultHistoryRef}
+          className="w-full flex flex-col-reverse gap-2 mb-4"
+          style={{ minHeight: '200px', maxHeight: '75vh', overflowY: 'auto' }}
+        >
+          {equations.slice().reverse().map((eq, i) => (
             <div
-            ref={resultHistoryRef}
-              className="w-full flex flex-col-reverse gap-2 mb-4"
-            style={{ minHeight: '200px', maxHeight: '75vh', overflowY: 'auto' }}
-          >
-              {equations.slice().reverse().map((eq, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
-                  onClick={() => {
-                    setCurrentEquation(eq);
-                    setAutoCompleteRanges([]);
-                    setTimeout(() => inputRef.current?.focus(), 0);
-                  }}
-                >
-                  <span className="text-foreground font-bold ml-2">
-                    {results.slice().reverse()[i] !== undefined ? String(results.slice().reverse()[i]) : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div
-              className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
-              style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
+              key={i}
+              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-background transition-all cursor-pointer"
+              onClick={() => {
+                setCurrentEquation(eq);
+                setAutoCompleteRanges([]);
+                setTimeout(() => inputRef.current?.focus(), 0);
+              }}
             >
               <span className="text-foreground font-bold ml-2">
-                {currentResult !== undefined && currentResult !== null && String(currentResult).toLowerCase() !== 'error' ? String(currentResult) : ''}
+                {(() => {
+                  const res = results.slice().reverse()[i];
+                  if (Array.isArray(res)) {
+                    return res.length > 0 ? String(res[res.length - 1]) : '';
+                  }
+                  return res !== undefined && res !== null ? String(res) : '';
+                })()}
               </span>
             </div>
-          </div>
+          ))}
+        </div>
+        <div
+          className="text-foreground font-mono break-words text-l min-h-[2.5em] flex items-center border-t border-gray-200 pt-4 justify-start text-left pl-2 overflow-x-auto whitespace-nowrap"
+          style={{ minHeight: '2.5em', minWidth: '250px', maxWidth: '320px' }}
+        >
+          <span className="text-foreground font-bold ml-2">
+            {(() => {
+              if (Array.isArray(currentResult)) {
+                return currentResult.length > 0 ? String(currentResult[currentResult.length - 1]) : '';
+              }
+              return currentResult !== undefined && currentResult !== null && String(currentResult).toLowerCase() !== 'error' ? String(currentResult) : '';
+            })()}
+          </span>
+        </div>
+      </div>
         </div>
       )}
     </main>
